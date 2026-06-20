@@ -1,0 +1,24 @@
+# ===========================
+# SECRETS — NEVER COMMIT
+# ===========================
+**/appsettings.Development.json
+**/appsettings.*.json
+!**/appsettings.json
+
+# ===========================
+# .NET Build outputs
+# ===========================
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+logs/
+
+# ===========================
+# OS / IDE
+# ===========================
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/settings.json

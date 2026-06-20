@@ -1,0 +1,95 @@
+# ============================================================
+# Backend CI/CD Pipeline — Smart Employee Portal .NET 10 API
+# ============================================================
+# Triggers on every push to main branch (src folder changes only)
+# Steps: restore → build → test → publish → deploy to Azure App Service
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/**
+      - tests/**
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '10.x'
+  projectPath: 'src/SmartEmployeePortal.API/SmartEmployeePortal.API.csproj'
+  testProjectPath: 'tests/SmartEmployeePortal.Application.Tests/SmartEmployeePortal.Application.Tests.csproj'
+
+stages:
+
+  # ── Stage 1: Build & Test ────────────────────────────────────────────────
+  - stage: Build
+    displayName: 'Build & Test'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build and Run Tests'
+        steps:
+
+          - task: UseDotNet@2
+            displayName: 'Install .NET $(dotnetVersion)'
+            inputs:
+              version: $(dotnetVersion)
+              includePreviewVersions: true
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore NuGet packages'
+            inputs:
+              command: 'restore'
+              projects: '**/*.csproj'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build solution'
+            inputs:
+              command: 'build'
+              projects: '**/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run unit tests'
+            inputs:
+              command: 'test'
+              projects: $(testProjectPath)
+              arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
+              publishTestResults: true
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish API'
+            inputs:
+              command: 'publish'
+              projects: $(projectPath)
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Upload API artifact'
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)/api'
+              artifactName: 'SmartEmployeePortal-API'
+
+  # ── Stage 2: Deploy to Azure App Service ────────────────────────────────
+  - stage: Deploy
+    displayName: 'Deploy to Azure'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployAPI
+        displayName: 'Deploy .NET API to App Service'
+        environment: 'Development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  displayName: 'Deploy to api-sep-dev'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    appType: 'webApp'
+                    appName: 'api-sep-dev'
+                    package: '$(Pipeline.Workspace)/SmartEmployeePortal-API/**/*.zip'
+                    deploymentMethod: 'auto'
