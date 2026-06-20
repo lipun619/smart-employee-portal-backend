@@ -150,14 +150,22 @@ try
     app.MapControllers();
 
     // ============================================================
-    // STEP 8: Auto-apply EF Core migrations
+    // STEP 8: Auto-apply EF Core migrations (opt-in outside Development)
     // ============================================================
-    using (var scope = app.Services.CreateScope())
+    var runMigrationsOnStartup = builder.Environment.IsDevelopment()
+        || builder.Configuration.GetValue<bool>("Database:RunMigrationsOnStartup");
+
+    if (runMigrationsOnStartup)
     {
+        using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Log.Information("Applying database migrations...");
         await db.Database.MigrateAsync();
         Log.Information("Migrations applied successfully.");
+    }
+    else
+    {
+        Log.Information("Skipping automatic database migrations on startup.");
     }
 
     Log.Information("API started successfully.");
