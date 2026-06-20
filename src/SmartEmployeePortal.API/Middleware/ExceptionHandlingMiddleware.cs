@@ -11,15 +11,19 @@ public class ExceptionHandlingMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
     private readonly IWebHostEnvironment _env;
+    private readonly bool _exposeDetailedErrors;
 
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        IConfiguration configuration)
     {
         _next = next;
         _logger = logger;
         _env = env;
+        _exposeDetailedErrors = _env.IsDevelopment()
+            || configuration.GetValue<bool>("Diagnostics:ExposeDetailedErrors");
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -57,7 +61,7 @@ public class ExceptionHandlingMiddleware
             _ => (
                 HttpStatusCode.InternalServerError,
                 ApiResponse<object>.Fail(
-                    _env.IsDevelopment()
+                    _exposeDetailedErrors
                         ? exception.Message
                         : "An unexpected error occurred. Please try again later."))
         };

@@ -152,8 +152,7 @@ try
     // ============================================================
     // STEP 8: Auto-apply EF Core migrations (opt-in outside Development)
     // ============================================================
-    var runMigrationsOnStartup = builder.Environment.IsDevelopment()
-        || builder.Configuration.GetValue<bool>("Database:RunMigrationsOnStartup");
+    var runMigrationsOnStartup = builder.Configuration.GetValue<bool>("Database:RunMigrationsOnStartup");
 
     if (runMigrationsOnStartup)
     {
