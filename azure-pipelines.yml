@@ -77,7 +77,7 @@ stages:
   - stage: Deploy
     displayName: 'Deploy to Azure'
     dependsOn: Build
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/master')))
     jobs:
       - deployment: DeployAPI
         displayName: 'Deploy .NET API to App Service'
@@ -89,7 +89,7 @@ stages:
                 - task: AzureWebApp@1
                   displayName: 'Deploy to api-sep-dev'
                   inputs:
-                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+                    azureSubscription: 'AZURE_SERVICE_CONNECTION'
                     appType: 'webApp'
                     appName: 'api-sep-dev'
                     package: '$(Pipeline.Workspace)/SmartEmployeePortal-API/**/*.zip'
