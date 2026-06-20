@@ -114,10 +114,20 @@ try
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AngularPolicy", policy =>
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials());
+        {
+            if (allowedOrigins.Length > 0)
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
+            else
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
+        });
     });
 
     builder.Services.AddAuthentication("Bearer")
