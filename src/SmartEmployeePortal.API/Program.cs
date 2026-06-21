@@ -26,24 +26,29 @@ try
 
     // ============================================================
     // STEP 2: Load secrets from Azure Key Vault (skip if not configured)
+    // Uses ManagedIdentityCredential directly — faster and reliable on Azure App Service.
+    // DefaultAzureCredential probes many credential sources and can block/timeout at startup.
     // ============================================================
-    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
+    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"]
+        ?? builder.Configuration["AzureKeyVault__VaultUri"];
     if (!string.IsNullOrWhiteSpace(keyVaultUri))
     {
         try
         {
-            builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
-            Log.Information("Azure Key Vault configured: {VaultUri}", keyVaultUri);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var credential = new ManagedIdentityCredential(ManagedIdentityId.SystemAssigned);
+            builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), credential);
+            Log.Information("Azure Key Vault configured via Managed Identity: {VaultUri}", keyVaultUri);
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to connect to Azure Key Vault at {VaultUri}. Falling back to direct configuration.", keyVaultUri);
-            // Continue startup using direct connection string from App Service settings
+            Log.Error(ex, "Key Vault unavailable at {VaultUri}. Falling back to App Service settings.", keyVaultUri);
+            // Non-fatal: startup continues using ConnectionStrings__DefaultConnection from App Service
         }
     }
     else
     {
-        Log.Information("Azure Key Vault URI not configured. Using App Service settings for database connection.");
+        Log.Information("AzureKeyVault:VaultUri not set. Using App Service settings for secrets.");
     }
 
     // ============================================================
