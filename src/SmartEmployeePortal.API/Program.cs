@@ -49,8 +49,27 @@ try
     // ============================================================
     // STEP 3: Register Application + Infrastructure services
     // ============================================================
-    builder.Services.AddApplication();
-    builder.Services.AddInfrastructure(builder.Configuration);
+    try
+    {
+        builder.Services.AddApplication();
+        Log.Information("Application services registered.");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Failed to register Application services.");
+        throw;
+    }
+
+    try
+    {
+        builder.Services.AddInfrastructure(builder.Configuration);
+        Log.Information("Infrastructure services registered.");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Failed to register Infrastructure services. Check database connection string and Entity Framework configuration.");
+        throw;
+    }
 
     // Application Insights — only activate when connection string is configured
     // In local dev without Key Vault, this is safely skipped
