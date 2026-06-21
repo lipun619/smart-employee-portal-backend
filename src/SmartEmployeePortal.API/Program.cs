@@ -61,30 +61,6 @@ try
         Log.Error(ex, "Infrastructure registration failed. API will start in degraded mode (Swagger/health available) to avoid 500.30.");
     }
 
-    // Application Insights — only activate when connection string is configured
-    // In local dev without Key Vault, this is safely skipped
-    var appInsightsConnection = builder.Configuration["ApplicationInsights:ConnectionString"]
-        ?? builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
-    if (!string.IsNullOrWhiteSpace(appInsightsConnection))
-    {
-        try
-        {
-            builder.Services.AddApplicationInsightsTelemetry(options =>
-            {
-                options.ConnectionString = appInsightsConnection;
-            });
-            Log.Information("Application Insights configured.");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Application Insights registration failed. Continuing without telemetry.");
-        }
-    }
-    else
-    {
-        Log.Warning("Application Insights connection string not configured. Telemetry disabled for local dev.");
-    }
-
     // ============================================================
     // STEP 3: Controllers with JSON enum string conversion
     // ============================================================
@@ -160,13 +136,6 @@ try
     builder.Services.AddAuthorization();
 
     var app = builder.Build();
-
-    // Log AI initialization status early (visible in Log Stream and AI itself)
-    var aiStatus = !string.IsNullOrWhiteSpace(appInsightsConnection) ? "ENABLED" : "DISABLED (NO CONNECTION STRING)";
-    var aiMasked = !string.IsNullOrWhiteSpace(appInsightsConnection)
-        ? $"***{appInsightsConnection.Substring(Math.Max(0, appInsightsConnection.Length - 20))}"
-        : "NOT SET - CHECK APP SERVICE ENVIRONMENT VARIABLE APPLICATIONINSIGHTS_CONNECTION_STRING";
-    Log.Information("\n=== STARTUP DIAGNOSTICS ===\nApplication Insights Status: {AIStatus}\nConnection hint: {AIHint}\n===========================", aiStatus, aiMasked);
 
     // ============================================================
     // STEP 7: Middleware pipeline

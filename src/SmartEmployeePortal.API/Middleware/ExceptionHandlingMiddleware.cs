@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.ApplicationInsights;
 using SmartEmployeePortal.API.Common;
 using SmartEmployeePortal.Application.Common.Exceptions;
 using ValidationException = SmartEmployeePortal.Application.Common.Exceptions.ValidationException;
@@ -11,20 +10,17 @@ public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-    private readonly TelemetryClient? _telemetryClient;
     private readonly IWebHostEnvironment _env;
     private readonly bool _exposeDetailedErrors;
 
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger,
-        IServiceProvider serviceProvider,
         IWebHostEnvironment env,
         IConfiguration configuration)
     {
         _next = next;
         _logger = logger;
-        _telemetryClient = serviceProvider.GetService<TelemetryClient>();
         _env = env;
         _exposeDetailedErrors = _env.IsDevelopment()
             || configuration.GetValue<bool>("Diagnostics:ExposeDetailedErrors");
@@ -55,14 +51,6 @@ public class ExceptionHandlingMiddleware
             requestPath,
             traceId,
             exception.Message);
-
-        // Explicitly push handled exceptions to Application Insights so they surface in Failures/Exceptions.
-        _telemetryClient?.TrackException(exception, new Dictionary<string, string>
-        {
-            ["TraceId"] = traceId,
-            ["Method"] = requestMethod,
-            ["Path"] = requestPath
-        });
 
         context.Response.ContentType = "application/json";
         context.Response.Headers["X-Correlation-ID"] = traceId;
