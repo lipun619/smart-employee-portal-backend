@@ -109,8 +109,19 @@ try
     // ============================================================
     builder.Services.AddCors(options =>
     {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        if (allowedOrigins == null || allowedOrigins.Length == 0)
+        {
+            Log.Warning("No CORS allowed origins configured. Defaulting to http://localhost:4200 for development.");
+            allowedOrigins = new[] { "http://localhost:4200" };
+        }
+        else
+        {
+            Log.Information("CORS allowed origins: {Origins}", string.Join(", ", allowedOrigins));
+        }
         options.AddPolicy("AngularPolicy", policy =>
-            policy.AllowAnyMethod()
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
                   .AllowAnyHeader());
     });
 
