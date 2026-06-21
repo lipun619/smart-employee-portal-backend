@@ -40,9 +40,20 @@ public class ExceptionHandlingMiddleware
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
+        var traceId = context.TraceIdentifier;
+        var requestPath = context.Request.Path.Value ?? "unknown";
+        var requestMethod = context.Request.Method;
+
+        _logger.LogError(
+            exception,
+            "Unhandled exception for {Method} {Path}. TraceId: {TraceId}. Message: {Message}",
+            requestMethod,
+            requestPath,
+            traceId,
+            exception.Message);
 
         context.Response.ContentType = "application/json";
+        context.Response.Headers["X-Correlation-ID"] = traceId;
 
         var (statusCode, response) = exception switch
         {
@@ -63,7 +74,7 @@ public class ExceptionHandlingMiddleware
                 ApiResponse<object>.Fail(
                     _exposeDetailedErrors
                         ? exception.Message
-                        : "An unexpected error occurred. Please try again later."))
+                        : $"An unexpected error occurred. Please try again later. Reference ID: {traceId}"))
         };
 
         context.Response.StatusCode = (int)statusCode;

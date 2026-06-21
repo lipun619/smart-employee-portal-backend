@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog.Events;
 using SmartEmployeePortal.API.Middleware;
 using SmartEmployeePortal.Application;
 using SmartEmployeePortal.Infrastructure;
@@ -64,7 +65,9 @@ try
         try
         {
             builder.Services.AddApplicationInsightsTelemetry(options =>
-                options.ConnectionString = appInsightsConnection);
+            {
+                options.ConnectionString = appInsightsConnection;
+            });
             Log.Information("Application Insights configured.");
         }
         catch (Exception ex)
@@ -169,7 +172,43 @@ try
     app.UseCors("AngularPolicy");
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseSerilogRequestLogging();
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.MessageTemplate =
+            "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms (TraceId: {TraceId})";
+
+        options.GetLevel = (httpContext, elapsed, ex) =>
+        {
+            if (ex != null || httpContext.Response.StatusCode >= 500)
+            {
+                return LogEventLevel.Error;
+            }
+
+            if (httpContext.Response.StatusCode >= 400)
+            {
+                return LogEventLevel.Warning;
+            }
+
+            return LogEventLevel.Information;
+        };
+
+        options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+        {
+            diagnosticContext.Set("TraceId", httpContext.TraceIdentifier);
+            diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+            diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+            diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+
+            var userId = httpContext.User?.Identity?.IsAuthenticated == true
+                ? (httpContext.User.FindFirst("sub")?.Value
+                    ?? httpContext.User.FindFirst("nameid")?.Value
+                    ?? httpContext.User.Identity?.Name
+                    ?? "authenticated")
+                : "anonymous";
+
+            diagnosticContext.Set("UserId", userId);
+        };
+    });
 
     app.MapGet("/health/startup", () =>
     {
