@@ -236,7 +236,7 @@ try
     {
         app.MapGet("/debug/throw", () =>
         {
-            throw new InvalidOperationException("Synthetic test exception for Application Insights validation.");
+            throw new Exception("Synthetic test exception for Application Insights validation.");
         });
 
         Log.Warning("Diagnostics test error endpoint enabled at /debug/throw.");
