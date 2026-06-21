@@ -110,8 +110,7 @@ try
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AngularPolicy", policy =>
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
+            policy.AllowAnyMethod()
                   .AllowAnyHeader());
     });
 
@@ -162,7 +161,7 @@ try
         Log.Information("Skipping automatic database migrations on startup.");
     }
 
-    Log.Information("API started successfully.");
+    Log.Information("API started successfully on http://localhost:5048");
     await app.RunAsync();
 }
 catch (Exception ex)
