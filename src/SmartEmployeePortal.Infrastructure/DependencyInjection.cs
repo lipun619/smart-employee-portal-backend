@@ -109,6 +109,8 @@ public static class DependencyInjection
                 path: "logs/smart-employee-portal-.log",
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
+                buffered: false,
+                flushToDiskInterval: TimeSpan.FromSeconds(1),
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}");
 
         if (!string.IsNullOrWhiteSpace(appServiceLogPath))
@@ -117,6 +119,8 @@ public static class DependencyInjection
                 path: appServiceLogPath,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
+                buffered: false,
+                flushToDiskInterval: TimeSpan.FromSeconds(1),
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}");
         }
 
