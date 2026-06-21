@@ -22,7 +22,12 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Host.UseSerilog();
+    builder.Host.UseSerilog(
+        (context, services, loggerConfiguration) => loggerConfiguration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services),
+        preserveStaticLogger: true,
+        writeToProviders: true);
 
     // ============================================================
     // STEP 2: Use App Service environment variables only (Key Vault disabled for now)
