@@ -5,6 +5,7 @@ using Serilog;
 using SmartEmployeePortal.Domain.Interfaces;
 using SmartEmployeePortal.Infrastructure.Persistence;
 using SmartEmployeePortal.Infrastructure.Persistence.Repositories;
+using System.IO;
 
 namespace SmartEmployeePortal.Infrastructure;
 
@@ -83,7 +84,21 @@ public static class DependencyInjection
     /// </summary>
     public static void ConfigureSerilog(IConfiguration configuration)
     {
-        Log.Logger = new LoggerConfiguration()
+        var appServiceHome = Environment.GetEnvironmentVariable("HOME");
+        var appServiceLogPath = !string.IsNullOrWhiteSpace(appServiceHome)
+            ? Path.Combine(appServiceHome, "LogFiles", "Application", "smart-employee-portal-.log")
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(appServiceLogPath))
+        {
+            var appServiceLogDirectory = Path.GetDirectoryName(appServiceLogPath);
+            if (!string.IsNullOrWhiteSpace(appServiceLogDirectory))
+            {
+                Directory.CreateDirectory(appServiceLogDirectory);
+            }
+        }
+
+        var loggerConfiguration = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .Enrich.WithMachineName()
@@ -94,7 +109,17 @@ public static class DependencyInjection
                 path: "logs/smart-employee-portal-.log",
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
-            .CreateLogger();
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}");
+
+        if (!string.IsNullOrWhiteSpace(appServiceLogPath))
+        {
+            loggerConfiguration = loggerConfiguration.WriteTo.File(
+                path: appServiceLogPath,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}");
+        }
+
+        Log.Logger = loggerConfiguration.CreateLogger();
     }
 }
