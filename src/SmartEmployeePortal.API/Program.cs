@@ -86,7 +86,7 @@ try
     }
 
     // ============================================================
-    // STEP 4: Controllers with JSON enum string conversion
+    // STEP 3: Controllers with JSON enum string conversion
     // ============================================================
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
@@ -160,6 +160,13 @@ try
     builder.Services.AddAuthorization();
 
     var app = builder.Build();
+
+    // Log AI initialization status early (visible in Log Stream and AI itself)
+    var aiStatus = !string.IsNullOrWhiteSpace(appInsightsConnection) ? "ENABLED" : "DISABLED (NO CONNECTION STRING)";
+    var aiMasked = !string.IsNullOrWhiteSpace(appInsightsConnection)
+        ? $"***{appInsightsConnection.Substring(Math.Max(0, appInsightsConnection.Length - 20))}"
+        : "NOT SET - CHECK APP SERVICE ENVIRONMENT VARIABLE APPLICATIONINSIGHTS_CONNECTION_STRING";
+    Log.Information("\n=== STARTUP DIAGNOSTICS ===\nApplication Insights Status: {AIStatus}\nConnection hint: {AIHint}\n===========================", aiStatus, aiMasked);
 
     // ============================================================
     // STEP 7: Middleware pipeline
