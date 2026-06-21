@@ -18,11 +18,24 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Register EF Core with Azure SQL Server
-        // Connection string comes from Key Vault via configuration pipeline set up in Program.cs
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "Connection string 'DefaultConnection' not found. Ensure Key Vault is configured.");
+        // Register EF Core with Azure SQL Server.
+        // Accept multiple key formats because Azure App Service can surface connection strings
+        // differently depending on where they are configured (App Settings vs Connection Strings).
+        var connectionString =
+            configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionStrings:DefaultConnection"]
+            ?? configuration["ConnectionStrings__DefaultConnection"]
+            ?? configuration["ConnectionStrings:ConnectionStrings__DefaultConnection"]
+            ?? configuration["SQLCONNSTR_DefaultConnection"]
+            ?? configuration["SQLAZURECONNSTR_DefaultConnection"]
+            ?? configuration["CUSTOMCONNSTR_DefaultConnection"];
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Connection string not found. Configure one of: ConnectionStrings:DefaultConnection, " +
+                "ConnectionStrings__DefaultConnection, SQLCONNSTR_DefaultConnection, or Key Vault secret ConnectionStrings--DefaultConnection.");
+        }
 
         services.AddDbContext<ApplicationDbContext>(options =>
         {
