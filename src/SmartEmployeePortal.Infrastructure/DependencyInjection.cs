@@ -32,6 +32,24 @@ public static class DependencyInjection
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
+            // Last-resort discovery: pick any config entry whose key ends with/contains DefaultConnection.
+            // This covers unusual Azure key shapes like SQLCONNSTR_ConnectionStrings__DefaultConnection.
+            var discovered = configuration
+                .AsEnumerable()
+                .FirstOrDefault(kv =>
+                    !string.IsNullOrWhiteSpace(kv.Value) &&
+                    kv.Key.Contains("DefaultConnection", StringComparison.OrdinalIgnoreCase));
+
+            connectionString = discovered.Value;
+
+            if (!string.IsNullOrWhiteSpace(connectionString))
+            {
+                Log.Warning("Resolved DB connection string from discovered configuration key: {ConfigKey}", discovered.Key);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
             throw new InvalidOperationException(
                 "Connection string not found. Configure one of: ConnectionStrings:DefaultConnection, " +
                 "ConnectionStrings__DefaultConnection, SQLCONNSTR_DefaultConnection, or Key Vault secret ConnectionStrings--DefaultConnection.");
