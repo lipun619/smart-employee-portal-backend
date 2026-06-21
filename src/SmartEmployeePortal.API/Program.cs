@@ -49,6 +49,8 @@ try
     // ============================================================
     // STEP 3: Register Application + Infrastructure services
     // ============================================================
+    var infrastructureReady = true;
+
     try
     {
         builder.Services.AddApplication();
@@ -67,8 +69,8 @@ try
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "Failed to register Infrastructure services. Check database connection string and Entity Framework configuration.");
-        throw;
+        infrastructureReady = false;
+        Log.Error(ex, "Infrastructure registration failed. API will start in degraded mode (Swagger/health available) to avoid 500.30.");
     }
 
     // Application Insights — only activate when connection string is configured
@@ -77,9 +79,16 @@ try
         ?? builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
     if (!string.IsNullOrWhiteSpace(appInsightsConnection))
     {
-        builder.Services.AddApplicationInsightsTelemetry(options =>
-            options.ConnectionString = appInsightsConnection);
-        Log.Information("Application Insights configured.");
+        try
+        {
+            builder.Services.AddApplicationInsightsTelemetry(options =>
+                options.ConnectionString = appInsightsConnection);
+            Log.Information("Application Insights configured.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Application Insights registration failed. Continuing without telemetry.");
+        }
     }
     else
     {
@@ -179,6 +188,16 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseSerilogRequestLogging();
+
+    app.MapGet("/health/startup", () =>
+    {
+        return Results.Ok(new
+        {
+            status = infrastructureReady ? "ok" : "degraded",
+            infrastructureReady
+        });
+    });
+
     app.MapControllers();
 
     // ============================================================
@@ -188,11 +207,18 @@ try
 
     if (runMigrationsOnStartup)
     {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Log.Information("Applying database migrations...");
-        await db.Database.MigrateAsync();
-        Log.Information("Migrations applied successfully.");
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Log.Information("Applying database migrations...");
+            await db.Database.MigrateAsync();
+            Log.Information("Migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Database migration on startup failed. Continuing startup.");
+        }
     }
     else
     {
