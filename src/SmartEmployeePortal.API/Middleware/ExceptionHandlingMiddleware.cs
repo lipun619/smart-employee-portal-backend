@@ -18,13 +18,13 @@ public class ExceptionHandlingMiddleware
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger,
-        TelemetryClient? telemetryClient,
+        IServiceProvider serviceProvider,
         IWebHostEnvironment env,
         IConfiguration configuration)
     {
         _next = next;
         _logger = logger;
-        _telemetryClient = telemetryClient;
+        _telemetryClient = serviceProvider.GetService<TelemetryClient>();
         _env = env;
         _exposeDetailedErrors = _env.IsDevelopment()
             || configuration.GetValue<bool>("Diagnostics:ExposeDetailedErrors");
