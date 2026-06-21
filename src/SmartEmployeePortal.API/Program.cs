@@ -1,5 +1,4 @@
-﻿using Azure.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using SmartEmployeePortal.API.Middleware;
@@ -25,31 +24,9 @@ try
     builder.Host.UseSerilog();
 
     // ============================================================
-    // STEP 2: Load secrets from Azure Key Vault (skip if not configured)
-    // Uses ManagedIdentityCredential directly — faster and reliable on Azure App Service.
-    // DefaultAzureCredential probes many credential sources and can block/timeout at startup.
+    // STEP 2: Use App Service environment variables only (Key Vault disabled for now)
     // ============================================================
-    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"]
-        ?? builder.Configuration["AzureKeyVault__VaultUri"];
-    if (!string.IsNullOrWhiteSpace(keyVaultUri))
-    {
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var credential = new ManagedIdentityCredential(ManagedIdentityId.SystemAssigned);
-            builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), credential);
-            Log.Information("Azure Key Vault configured via Managed Identity: {VaultUri}", keyVaultUri);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Key Vault unavailable at {VaultUri}. Falling back to App Service settings.", keyVaultUri);
-            // Non-fatal: startup continues using ConnectionStrings__DefaultConnection from App Service
-        }
-    }
-    else
-    {
-        Log.Information("AzureKeyVault:VaultUri not set. Using App Service settings for secrets.");
-    }
+    Log.Information("Azure Key Vault integration is disabled. Using App Service environment variables for secrets.");
 
     // ============================================================
     // STEP 3: Register Application + Infrastructure services
