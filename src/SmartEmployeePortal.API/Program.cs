@@ -27,16 +27,18 @@ try
     // ============================================================
     // STEP 2: Load secrets from Azure Key Vault (skip if not configured)
     // ============================================================
-    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
-    if (!string.IsNullOrWhiteSpace(keyVaultUri))
-    {
-        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
-        Log.Information("Azure Key Vault configured: {VaultUri}", keyVaultUri);
-    }
-    else
-    {
-        Log.Warning("Azure Key Vault URI not configured. Using appsettings for secrets (dev only).");
-    }
+    // TEMPORARILY DISABLED for debugging 500.30 error
+    // var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
+    // if (!string.IsNullOrWhiteSpace(keyVaultUri))
+    // {
+    //     builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+    //     Log.Information("Azure Key Vault configured: {VaultUri}", keyVaultUri);
+    // }
+    // else
+    // {
+    //     Log.Warning("Azure Key Vault URI not configured. Using appsettings for secrets (dev only).");
+    // }
+    Log.Warning("Azure Key Vault integration temporarily disabled for debugging.");
 
     // ============================================================
     // STEP 3: Register Application + Infrastructure services
