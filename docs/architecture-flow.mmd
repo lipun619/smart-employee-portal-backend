@@ -1,0 +1,65 @@
+flowchart TB
+    Client([Client / Angular App])
+
+    subgraph API["PRESENTATION - SmartEmployeePortal.API"]
+        Controller["EmployeesController / DepartmentsController<br/>(ISender.Send)"]
+        Middleware["ExceptionHandlingMiddleware<br/>(maps exceptions to HTTP codes)"]
+    end
+
+    subgraph APP["APPLICATION - SmartEmployeePortal.Application"]
+        direction TB
+        Pipeline["MediatR Pipeline Behaviors<br/>1. LoggingBehavior<br/>2. ValidationBehavior (FluentValidation)"]
+
+        subgraph CMD["Commands (change data)"]
+            CmdHandler["CreateEmployeeCommandHandler<br/>UpdateEmployeeCommandHandler<br/>DeleteEmployeeCommandHandler"]
+        end
+        subgraph QRY["Queries (read data)"]
+            QryHandler["GetEmployeeByIdQueryHandler<br/>GetAllEmployeesQueryHandler<br/>GetEmployeesPaginatedQueryHandler"]
+        end
+        Mapster["Mapster<br/>(Entity to DTO)"]
+    end
+
+    subgraph DOMAIN["DOMAIN - SmartEmployeePortal.Domain"]
+        DomainLogic["Domain Logic<br/>Employee.Terminate() / SoftDelete()<br/>FullName"]
+        Interfaces["Interfaces (contracts)<br/>IEmployeeRepository<br/>IUnitOfWork"]
+    end
+
+    subgraph INFRA["INFRASTRUCTURE - SmartEmployeePortal.Infrastructure"]
+        Repos["EmployeeRepository / DepartmentRepository<br/>UnitOfWork (implements interfaces)"]
+        DbContext["ApplicationDbContext (EF Core)<br/>soft-delete filter, audit stamping"]
+    end
+
+    DB[(SQL Server<br/>Database)]
+
+    %% Request flow
+    Client -->|"1. HTTP Request"| Controller
+    Controller -->|"2. Send Command / Query"| Pipeline
+    Pipeline -->|"3. validated request"| CmdHandler
+    Pipeline -->|"3. validated request"| QryHandler
+
+    %% Command path
+    CmdHandler -->|"4. call via interface"| Interfaces
+    CmdHandler -->|"5. invoke entity method"| DomainLogic
+    CmdHandler -.->|"map result"| Mapster
+
+    %% Query path
+    QryHandler -->|"4. call via interface"| Interfaces
+    QryHandler -.->|"map result"| Mapster
+
+    %% Interface to implementation (Dependency Inversion)
+    Interfaces -. implemented by .-> Repos
+    Repos -->|"6. EF Core"| DbContext
+    DbContext -->|"7. SQL"| DB
+    DB -->|"8. rows"| DbContext
+    DbContext --> Repos
+
+    %% Response flow
+    Mapster -->|"DTO"| Controller
+    Controller -->|"9. ApiResponse&lt;T&gt;"| Client
+    Middleware -.->|"catches errors"| Controller
+
+    style DOMAIN fill:#fff3b0,stroke:#e0a800
+    style APP fill:#d1e7dd,stroke:#0f5132
+    style INFRA fill:#f8d7da,stroke:#842029
+    style API fill:#cfe2ff,stroke:#084298
+    style DB fill:#e2d9f3,stroke:#59359a

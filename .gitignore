@@ -1,9 +1,9 @@
 # ===========================
 # SECRETS — NEVER COMMIT
 # ===========================
-**/appsettings.Development.json
 **/appsettings.*.json
 !**/appsettings.json
+!**/appsettings.Development.json
 
 # ===========================
 # .NET Build outputs

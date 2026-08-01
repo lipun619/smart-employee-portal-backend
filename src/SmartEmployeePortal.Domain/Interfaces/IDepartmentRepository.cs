@@ -1,4 +1,4 @@
-using SmartEmployeePortal.Domain.Common;
+using SmartEmployeePortal.Domain.Entities;
 
 namespace SmartEmployeePortal.Domain.Interfaces;
 
@@ -7,7 +7,7 @@ namespace SmartEmployeePortal.Domain.Interfaces;
 /// </summary>
 public interface IDepartmentRepository
 {
-    Task<IEnumerable<Domain.Entities.Department>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<Domain.Entities.Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task AddAsync(Domain.Entities.Department department, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Department>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task AddAsync(Department department, CancellationToken cancellationToken = default);
 }
