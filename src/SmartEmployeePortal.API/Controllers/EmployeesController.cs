@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartEmployeePortal.API.Common;
 using SmartEmployeePortal.Application.Employees.Commands.CreateEmployee;
@@ -25,6 +26,7 @@ namespace SmartEmployeePortal.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize] // All endpoints require authentication; specific policies override per-action
 public class EmployeesController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -73,6 +75,7 @@ public class EmployeesController : ControllerBase
     /// Create a new employee.
     /// </summary>
     [HttpPost]
+    [Authorize(Policy = "ManagerOrAbove")]
     [ProducesResponseType(typeof(ApiResponse<EmployeeDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
@@ -105,6 +108,7 @@ public class EmployeesController : ControllerBase
     /// Update an existing employee.
     /// </summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "ManagerOrAbove")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
@@ -135,6 +139,7 @@ public class EmployeesController : ControllerBase
     /// Soft-delete an employee (marks as deleted, not physically removed).
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(

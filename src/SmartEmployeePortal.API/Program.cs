@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
@@ -119,16 +121,38 @@ try
         options.AddPolicy("AngularPolicy", policy =>
             policy.WithOrigins(allowedOrigins)
                   .AllowAnyMethod()
-                  .AllowAnyHeader());
+                  .AllowAnyHeader()
+                  .SetPreflightMaxAge(TimeSpan.FromHours(1)));
     });
 
-    builder.Services.AddAuthentication("Bearer")
-        .AddJwtBearer("Bearer", options =>
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
         {
-            options.RequireHttpsMetadata = false;
+            var config = builder.Configuration;
+            options.Authority = $"{config["AzureAd:Instance"]}{config["AzureAd:TenantId"]}/v2.0";
+            // Prevent JWT middleware from remapping "roles" to ClaimTypes.Role (XML URI)
+            options.MapInboundClaims = false;
+            // Allow HTTP in development; require HTTPS in production
+            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateLifetime = true,
+                // Entra v2 tokens set aud to the GUID; also accept the full api:// URI for safety
+                ValidAudiences = new[]
+                {
+                    config["AzureAd:ClientId"],   // 58ef3b8b-... (what Entra v2 actually issues)
+                    config["AzureAd:Audience"]    // api://58ef3b8b-... (App ID URI)
+                },
+                RoleClaimType = "roles",
+                NameClaimType = "preferred_username"
+            };
         });
 
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+        options.AddPolicy("ManagerOrAbove", policy => policy.RequireRole("Admin", "Manager"));
+    });
 
     var app = builder.Build();
 

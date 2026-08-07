@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SmartEmployeePortal.Application.Common.Interfaces;
 using SmartEmployeePortal.Domain.Common;
 using SmartEmployeePortal.Domain.Entities;
 using SmartEmployeePortal.Infrastructure.Persistence.Configurations;
@@ -15,12 +16,17 @@ namespace SmartEmployeePortal.Infrastructure.Persistence;
 /// </summary>
 public class ApplicationDbContext : DbContext
 {
+    private readonly ICurrentUserService? _currentUser;
+
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Department> Departments => Set<Department>();
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        ICurrentUserService? currentUser = null)
         : base(options)
     {
+        _currentUser = currentUser;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -53,12 +59,12 @@ public class ApplicationDbContext : DbContext
             {
                 case Microsoft.EntityFrameworkCore.EntityState.Added:
                     entry.Entity.CreatedAt = utcNow;
-                    entry.Entity.CreatedBy ??= "system"; // Phase 2: replace with JWT claim
+                    entry.Entity.CreatedBy ??= _currentUser?.Email ?? _currentUser?.UserId ?? "system";
                     break;
 
                 case Microsoft.EntityFrameworkCore.EntityState.Modified:
                     entry.Entity.UpdatedAt = utcNow;
-                    entry.Entity.UpdatedBy ??= "system"; // Phase 2: replace with JWT claim
+                    entry.Entity.UpdatedBy ??= _currentUser?.Email ?? _currentUser?.UserId ?? "system";
                     break;
             }
         }

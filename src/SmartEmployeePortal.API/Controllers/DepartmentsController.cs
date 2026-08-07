@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartEmployeePortal.API.Common;
 using SmartEmployeePortal.Application.Departments.DTOs;
@@ -9,6 +10,7 @@ namespace SmartEmployeePortal.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize]
 public class DepartmentsController : ControllerBase
 {
     private readonly ISender _mediator;

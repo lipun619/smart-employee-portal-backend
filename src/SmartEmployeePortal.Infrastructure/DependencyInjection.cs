@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using SmartEmployeePortal.Application.Common.Interfaces;
 using SmartEmployeePortal.Domain.Interfaces;
 using SmartEmployeePortal.Infrastructure.Persistence;
 using SmartEmployeePortal.Infrastructure.Persistence.Repositories;
+using SmartEmployeePortal.Infrastructure.Services;
 using System.IO;
 
 namespace SmartEmployeePortal.Infrastructure;
@@ -73,6 +76,10 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // IHttpContextAccessor is needed by CurrentUserService to read JWT claims per request
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return services;
     }
