@@ -1,5 +1,6 @@
 using Mapster;
 using MediatR;
+using SmartEmployeePortal.Application.Common.Interfaces;
 using SmartEmployeePortal.Application.Employees.DTOs;
 using SmartEmployeePortal.Domain.Interfaces;
 
@@ -9,10 +10,12 @@ public class GetEmployeesPaginatedQueryHandler
     : IRequestHandler<GetEmployeesPaginatedQuery, PaginatedEmployeesDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IBlobStorageService _blobStorage;
 
-    public GetEmployeesPaginatedQueryHandler(IUnitOfWork unitOfWork)
+    public GetEmployeesPaginatedQueryHandler(IUnitOfWork unitOfWork, IBlobStorageService blobStorage)
     {
         _unitOfWork = unitOfWork;
+        _blobStorage = blobStorage;
     }
 
     public async Task<PaginatedEmployeesDto> Handle(
@@ -25,9 +28,14 @@ public class GetEmployeesPaginatedQueryHandler
             request.SearchTerm,
             cancellationToken);
 
+        var dtos = items.Adapt<List<EmployeeDto>>();
+
+        foreach (var dto in dtos.Where(d => !string.IsNullOrEmpty(d.ProfileImageUrl)))
+            dto.ProfileImageUrl = _blobStorage.GenerateReadSasUrl(dto.ProfileImageUrl!);
+
         return new PaginatedEmployeesDto
         {
-            Items = items.Adapt<IEnumerable<EmployeeDto>>(),
+            Items = dtos,
             TotalCount = totalCount,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Azure.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -27,9 +28,20 @@ try
     builder.Host.UseSerilog();
 
     // ============================================================
-    // STEP 2: Use App Service environment variables only (Key Vault disabled for now)
+    // STEP 2: Wire Key Vault when VaultUri is configured (Azure / production).
+    // Locally, appsettings.json values are used directly — no Key Vault needed.
+    // DefaultAzureCredential uses the App Service Managed Identity automatically.
     // ============================================================
-    Log.Information("Azure Key Vault integration is disabled. Using App Service environment variables for secrets.");
+    var vaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
+    if (!string.IsNullOrWhiteSpace(vaultUri))
+    {
+        builder.Configuration.AddAzureKeyVault(new Uri(vaultUri), new DefaultAzureCredential());
+        Log.Information("Azure Key Vault connected: {VaultUri}", vaultUri);
+    }
+    else
+    {
+        Log.Information("AzureKeyVault:VaultUri not set — using local configuration only.");
+    }
 
     // ============================================================
     // STEP 3: Register Application + Infrastructure services

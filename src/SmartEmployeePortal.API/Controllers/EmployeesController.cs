@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using SmartEmployeePortal.API.Common;
 using SmartEmployeePortal.Application.Employees.Commands.CreateEmployee;
 using SmartEmployeePortal.Application.Employees.Commands.DeleteEmployee;
+using SmartEmployeePortal.Application.Employees.Commands.GenerateSasToken;
+using SmartEmployeePortal.Application.Employees.Commands.UpdateProfileImage;
 using SmartEmployeePortal.Application.Employees.Commands.UpdateEmployee;
 using SmartEmployeePortal.Application.Employees.DTOs;
 using SmartEmployeePortal.Application.Employees.Queries.GetAllEmployees;
@@ -132,6 +134,43 @@ public class EmployeesController : ControllerBase
             dto.DepartmentId);
 
         await _mediator.Send(command, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Generate a short-lived SAS upload URL for a profile photo.
+    /// The client uploads directly to Azure Blob Storage; the API never handles the file bytes.
+    /// </summary>
+    [HttpPost("{id:guid}/profile-image/sas")]
+    [Authorize(Policy = "ManagerOrAbove")]
+    [ProducesResponseType(typeof(ApiResponse<SasTokenDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> GetProfileImageSasToken(
+        Guid id,
+        [FromBody] SasTokenRequestDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(
+            new GenerateSasTokenCommand(id, dto.FileExtension),
+            cancellationToken);
+
+        return Ok(ApiResponse<SasTokenDto>.Ok(result));
+    }
+
+    /// <summary>
+    /// Save the permanent blob URL to the employee record after a successful direct upload.
+    /// </summary>
+    [HttpPut("{id:guid}/profile-image")]
+    [Authorize(Policy = "ManagerOrAbove")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateProfileImage(
+        Guid id,
+        [FromBody] UpdateProfileImageDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        await _mediator.Send(new UpdateProfileImageCommand(id, dto.BlobUrl), cancellationToken);
         return NoContent();
     }
 

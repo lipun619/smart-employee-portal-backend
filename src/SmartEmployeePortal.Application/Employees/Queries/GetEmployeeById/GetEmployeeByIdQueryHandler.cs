@@ -1,6 +1,7 @@
 using Mapster;
 using MediatR;
 using SmartEmployeePortal.Application.Common.Exceptions;
+using SmartEmployeePortal.Application.Common.Interfaces;
 using SmartEmployeePortal.Application.Employees.DTOs;
 using SmartEmployeePortal.Domain.Interfaces;
 
@@ -10,10 +11,12 @@ public class GetEmployeeByIdQueryHandler
     : IRequestHandler<GetEmployeeByIdQuery, EmployeeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IBlobStorageService _blobStorage;
 
-    public GetEmployeeByIdQueryHandler(IUnitOfWork unitOfWork)
+    public GetEmployeeByIdQueryHandler(IUnitOfWork unitOfWork, IBlobStorageService blobStorage)
     {
         _unitOfWork = unitOfWork;
+        _blobStorage = blobStorage;
     }
 
     public async Task<EmployeeDto> Handle(
@@ -23,6 +26,11 @@ public class GetEmployeeByIdQueryHandler
         var employee = await _unitOfWork.Employees.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Entities.Employee), request.Id);
 
-        return employee.Adapt<EmployeeDto>();
+        var dto = employee.Adapt<EmployeeDto>();
+
+        if (!string.IsNullOrEmpty(dto.ProfileImageUrl))
+            dto.ProfileImageUrl = _blobStorage.GenerateReadSasUrl(dto.ProfileImageUrl);
+
+        return dto;
     }
 }

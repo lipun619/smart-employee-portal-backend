@@ -77,6 +77,8 @@ public static class DependencyInjection
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+        services.AddScoped<IBlobStorageService, BlobStorageService>();
+
         // IHttpContextAccessor is needed by CurrentUserService to read JWT claims per request
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

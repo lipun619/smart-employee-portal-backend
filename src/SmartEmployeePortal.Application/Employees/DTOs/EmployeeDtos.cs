@@ -66,6 +66,22 @@ public class UpdateEmployeeDto
     public Guid DepartmentId { get; set; }
 }
 
+public class SasTokenRequestDto
+{
+    public string FileExtension { get; set; } = string.Empty;
+}
+
+public class SasTokenDto
+{
+    public string SasUploadUrl { get; set; } = string.Empty;
+    public string PermanentBlobUrl { get; set; } = string.Empty;
+}
+
+public class UpdateProfileImageDto
+{
+    public string BlobUrl { get; set; } = string.Empty;
+}
+
 /// <summary>
 /// Paginated list result wrapper used by GetEmployeesPaginated query.
 /// </summary>

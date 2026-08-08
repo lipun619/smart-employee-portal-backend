@@ -20,31 +20,32 @@ git clone <repo-url>
 cd smart-employee-portal-backend
 ```
 
-### 2. Configure the connection string
+### 2. Create your local settings file
 
-The file `appsettings.Development.json` ships with a **LocalDB placeholder** connection string.  
-This works out of the box if you have Visual Studio / SQL Server LocalDB installed.
+`appsettings.Development.json` is **gitignored** (it contains secrets). Copy the checked-in template and fill in your values:
 
-**Option A — Use LocalDB (no Azure access needed)**
-
-No action required. The default in `appsettings.Development.json` will be used:
-```
-Server=(localdb)\mssqllocaldb;Database=SmartEmployeePortalDb;Trusted_Connection=True;TrustServerCertificate=True;
+**Windows (PowerShell)**
+```powershell
+copy src\SmartEmployeePortal.API\appsettings.Development.example.json `
+     src\SmartEmployeePortal.API\appsettings.Development.json
 ```
 
-**Option B — Use the shared Azure SQL Dev database**
-
-Contact a team member for the Azure SQL connection string, then store it in User Secrets (never commit passwords to Git):
-
+**macOS / Linux**
 ```bash
-cd src/SmartEmployeePortal.API
-
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<connection-string-from-team-member>"
+cp src/SmartEmployeePortal.API/appsettings.Development.example.json \
+   src/SmartEmployeePortal.API/appsettings.Development.json
 ```
 
-User Secrets are stored only on your local machine and override `appsettings.Development.json` automatically.
+### 3. Fill in the placeholder values
 
-### 3. Run the API
+Open `appsettings.Development.json` and replace the two placeholders:
+
+| Key | Where to get it |
+|-----|-----------------|
+| `ConnectionStrings:DefaultConnection` | Azure Portal → **SQL databases** → your database → **Settings → Connection strings** → **ADO.NET** tab → copy the string → replace `{your_username}` and `{your_password}` |
+| `BlobStorage:ConnectionString` | Azure Portal → **Storage accounts** → your storage account (`stsepdev`) → **Security + networking → Access keys** → copy **key1 Connection string** |
+
+### 4. Run the API
 
 ```bash
 cd src/SmartEmployeePortal.API
