@@ -10,4 +10,9 @@ public interface IBlobStorageService
     string GenerateReadSasUrl(string permanentBlobUrl);
 
     Task DeleteBlobAsync(string permanentBlobUrl, CancellationToken cancellationToken = default);
+
+    /// <summary>Server-side upload: streams bytes directly into Blob Storage. Returns the permanent blob URL.</summary>
+    Task<string> UploadStreamAsync(
+        Guid employeeId, Stream content, string contentType, string fileExtension,
+        CancellationToken cancellationToken = default);
 }

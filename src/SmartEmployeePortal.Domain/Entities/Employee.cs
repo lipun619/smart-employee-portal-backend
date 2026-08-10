@@ -33,6 +33,9 @@ public class Employee : BaseEntity, IAuditableEntity
     // Placeholder for Phase 3: Azure Blob Storage image URL
     public string? ProfileImageUrl { get; set; }
 
+    // Entra Object ID — cached after first Graph sync to avoid repeat email lookups
+    public string? EntraObjectId { get; set; }
+
     // Soft delete
     public bool IsDeleted { get; set; } = false;
 

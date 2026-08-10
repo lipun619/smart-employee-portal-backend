@@ -70,4 +70,23 @@ public class BlobStorageService : IBlobStorageService
         var blobClient = containerClient.GetBlobClient(blobName);
         await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
     }
+
+    public async Task<string> UploadStreamAsync(
+        Guid employeeId, Stream content, string contentType, string fileExtension,
+        CancellationToken cancellationToken = default)
+    {
+        var blobName = $"{employeeId}/{Guid.NewGuid()}{fileExtension}";
+        var containerClient = _serviceClient.GetBlobContainerClient(_containerName);
+
+        await containerClient.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
+
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        await blobClient.UploadAsync(content, new BlobUploadOptions
+        {
+            HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
+        }, cancellationToken);
+
+        return blobClient.Uri.AbsoluteUri;
+    }
 }

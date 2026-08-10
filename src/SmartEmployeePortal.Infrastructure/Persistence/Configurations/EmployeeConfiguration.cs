@@ -40,6 +40,10 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.ProfileImageUrl)
             .HasMaxLength(500);
 
+        // Entra Object ID is a GUID string (36 chars) but stored as nvarchar(36)
+        builder.Property(e => e.EntraObjectId)
+            .HasMaxLength(36);
+
         builder.Property(e => e.CreatedBy)
             .HasMaxLength(200);
 

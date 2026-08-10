@@ -95,3 +95,13 @@ public class PaginatedEmployeesDto
     public bool HasNextPage => PageNumber < TotalPages;
     public bool HasPreviousPage => PageNumber > 1;
 }
+
+public class GraphSyncResultDto
+{
+    public Guid EmployeeId { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? JobTitle { get; set; }
+    public bool PhotoSynced { get; set; }
+    public string Message { get; set; } = string.Empty;
+}

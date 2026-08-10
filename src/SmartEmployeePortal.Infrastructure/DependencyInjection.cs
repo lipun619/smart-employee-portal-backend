@@ -79,6 +79,11 @@ public static class DependencyInjection
 
         services.AddScoped<IBlobStorageService, BlobStorageService>();
 
+        // GraphService uses DefaultAzureCredential — no config keys needed.
+        // Azure: Managed Identity is used automatically.
+        // Local: falls back to Azure CLI (az login).
+        services.AddScoped<IGraphService, GraphService>();
+
         // IHttpContextAccessor is needed by CurrentUserService to read JWT claims per request
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

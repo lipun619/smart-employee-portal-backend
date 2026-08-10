@@ -5,6 +5,7 @@ using SmartEmployeePortal.API.Common;
 using SmartEmployeePortal.Application.Employees.Commands.CreateEmployee;
 using SmartEmployeePortal.Application.Employees.Commands.DeleteEmployee;
 using SmartEmployeePortal.Application.Employees.Commands.GenerateSasToken;
+using SmartEmployeePortal.Application.Employees.Commands.SyncFromGraph;
 using SmartEmployeePortal.Application.Employees.Commands.UpdateProfileImage;
 using SmartEmployeePortal.Application.Employees.Commands.UpdateEmployee;
 using SmartEmployeePortal.Application.Employees.DTOs;
@@ -187,5 +188,21 @@ public class EmployeesController : ControllerBase
     {
         await _mediator.Send(new DeleteEmployeeCommand(id), cancellationToken);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Syncs the employee's display name, job title, and profile photo from Microsoft Entra ID via Graph API.
+    /// Requires the App Service Managed Identity to have User.Read.All + ProfilePhoto.Read.All app roles.
+    /// </summary>
+    [HttpPost("{id:guid}/sync-from-graph")]
+    [Authorize(Policy = "ManagerOrAbove")]
+    [ProducesResponseType(typeof(ApiResponse<GraphSyncResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SyncFromGraph(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new SyncFromGraphCommand(id), cancellationToken);
+        return Ok(ApiResponse<GraphSyncResultDto>.Ok(result, result.Message));
     }
 }
