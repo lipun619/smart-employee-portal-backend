@@ -223,6 +223,47 @@ dotnet test
 
 ---
 
+## Git remotes and push flow
+
+### 1. Check existing remotes
+
+```bash
+git remote -v
+```
+
+### 2. Add GitHub remote if not present
+
+```bash
+git remote add github https://github.com/lipun619/smart-employee-portal-backend.git
+```
+
+### 3. Add Azure DevOps remote if not present
+
+```bash
+git remote add azuredevops https://devlipun1995@dev.azure.com/devlipun1995/smart-employee-portal/_git/smart-employee-portal-backend
+```
+
+### 4. Add and commit changes
+
+```bash
+git add .
+git commit -m "Your commit message"
+```
+
+### 5. Push to GitHub
+
+```bash
+git push github master
+```
+
+### 6. Push to Azure DevOps
+
+```bash
+git push azuredevops master
+```
+
+---
+
 ## Useful notes
 
 - API and Functions are separate runtime apps and are not deployed to the same Azure resource type.
