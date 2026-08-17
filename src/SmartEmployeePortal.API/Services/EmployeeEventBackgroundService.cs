@@ -41,7 +41,7 @@ public class EmployeeEventBackgroundService : BackgroundService
         _logger.LogInformation("EmployeeEventBackgroundService started — checking every hour for new hires.");
 
         // Use PeriodicTimer so the loop yields cleanly when the token is cancelled
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+        using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
 
         // Run once immediately on startup, then on each tick
         do

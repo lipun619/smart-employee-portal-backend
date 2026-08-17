@@ -31,7 +31,7 @@ public class BirthdayAnniversaryTimerFunction
     // "0 0 8 * * *" = every day at 08:00:00 UTC
     [Function(nameof(BirthdayAnniversaryTimerFunction))]
     public async Task Run(
-        [TimerTrigger("0 */2 * * * *")] TimerInfo timer,
+        [TimerTrigger("0 0 8 * * *")] TimerInfo timer,
         CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
