@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
 using SmartEmployeePortal.API.Middleware;
+using SmartEmployeePortal.API.Services;
 using SmartEmployeePortal.Application;
 using SmartEmployeePortal.Infrastructure;
 using SmartEmployeePortal.Infrastructure.Persistence;
@@ -69,6 +70,9 @@ try
         infrastructureReady = false;
         Log.Error(ex, "Infrastructure registration failed. API will start in degraded mode (Swagger/health available) to avoid 500.30.");
     }
+
+    // Background service: checks for new hires every hour and enqueues onboarding tasks
+    builder.Services.AddHostedService<EmployeeEventBackgroundService>();
 
     // ============================================================
     // STEP 3: Controllers with JSON enum string conversion

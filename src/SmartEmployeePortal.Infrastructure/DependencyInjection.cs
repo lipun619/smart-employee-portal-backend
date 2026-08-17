@@ -8,6 +8,7 @@ using SmartEmployeePortal.Domain.Interfaces;
 using SmartEmployeePortal.Infrastructure.Persistence;
 using SmartEmployeePortal.Infrastructure.Persistence.Repositories;
 using SmartEmployeePortal.Infrastructure.Services;
+using SmartEmployeePortal.Infrastructure.Services.Email;
 using System.IO;
 
 namespace SmartEmployeePortal.Infrastructure;
@@ -27,12 +28,10 @@ public static class DependencyInjection
         // differently depending on where they are configured (App Settings vs Connection Strings).
         var connectionString =
             configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionString:DefaultConnection"]
+            ?? configuration["ConnectionString--DefaultConnection"]
             ?? configuration["ConnectionStrings:DefaultConnection"]
-            ?? configuration["ConnectionStrings__DefaultConnection"]
-            ?? configuration["ConnectionStrings:ConnectionStrings__DefaultConnection"]
-            ?? configuration["SQLCONNSTR_DefaultConnection"]
-            ?? configuration["SQLAZURECONNSTR_DefaultConnection"]
-            ?? configuration["CUSTOMCONNSTR_DefaultConnection"];
+            ?? configuration["ConnectionStrings__DefaultConnection"];
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
@@ -78,6 +77,9 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IBlobStorageService, BlobStorageService>();
+
+        services.AddScoped<IEmailService, AcsEmailService>();
+        services.AddScoped<IQueueService, QueueService>();
 
         // GraphService uses DefaultAzureCredential — no config keys needed.
         // Azure: Managed Identity is used automatically.

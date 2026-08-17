@@ -1,0 +1,31 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "SmartEmployeePortal.API",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/SmartEmployeePortal.API/bin/Debug/net10.0/SmartEmployeePortal.API.dll",
+            "cwd": "${workspaceFolder}/src/SmartEmployeePortal.API",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "requireExactSource": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "Now listening on:.*",
+                "uriFormat": "http://localhost:5048"
+            }
+        },
+        {
+            "name": "SmartEmployeePortal.Functions (Attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "justMyCode": false
+        }
+    ]
+}

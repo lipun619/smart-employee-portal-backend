@@ -21,8 +21,11 @@ pool:
 variables:
   buildConfiguration: 'Release'
   dotnetVersion: '10.x'
-  projectPath: 'src/SmartEmployeePortal.API/SmartEmployeePortal.API.csproj'
+  apiProjectPath: 'src/SmartEmployeePortal.API/SmartEmployeePortal.API.csproj'
+  functionProjectPath: 'src/SmartEmployeePortal.Functions/SmartEmployeePortal.Functions.csproj'
   testProjectPath: 'tests/SmartEmployeePortal.Application.Tests/SmartEmployeePortal.Application.Tests.csproj'
+  apiAppName: 'api-sep-dev'
+  functionAppName: 'func-sep-dev'
 
 stages:
 
@@ -65,14 +68,27 @@ stages:
             displayName: 'Publish API'
             inputs:
               command: 'publish'
-              projects: $(projectPath)
+              projects: $(apiProjectPath)
               arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish Azure Function App'
+            inputs:
+              command: 'publish'
+              projects: $(functionProjectPath)
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/functions'
 
           - task: PublishBuildArtifacts@1
             displayName: 'Upload API artifact'
             inputs:
               pathToPublish: '$(Build.ArtifactStagingDirectory)/api'
               artifactName: 'SmartEmployeePortal-API'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Upload Function artifact'
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)/functions'
+              artifactName: 'SmartEmployeePortal-Functions'
 
   # ── Stage 2: Deploy to Azure App Service ────────────────────────────────
   - stage: Deploy
@@ -81,17 +97,26 @@ stages:
     condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/master')))
     jobs:
       - deployment: DeployAPI
-        displayName: 'Deploy .NET API to App Service'
+        displayName: 'Deploy .NET API and Azure Functions to Azure'
         environment: 'Development'
         strategy:
           runOnce:
             deploy:
               steps:
                 - task: AzureWebApp@1
-                  displayName: 'Deploy to api-sep-dev'
+                  displayName: 'Deploy API to App Service'
                   inputs:
                     azureSubscription: 'AZURE_SERVICE_CONNECTION'
                     appType: 'webApp'
-                    appName: 'api-sep-dev'
+                    appName: '$(apiAppName)'
                     package: '$(Pipeline.Workspace)/SmartEmployeePortal-API/**/*.zip'
+                    deploymentMethod: 'auto'
+
+                - task: AzureFunctionApp@1
+                  displayName: 'Deploy Azure Function App'
+                  inputs:
+                    azureSubscription: 'AZURE_SERVICE_CONNECTION'
+                    appType: 'functionApp'
+                    appName: '$(functionAppName)'
+                    package: '$(Pipeline.Workspace)/SmartEmployeePortal-Functions/**/*.zip'
                     deploymentMethod: 'auto'

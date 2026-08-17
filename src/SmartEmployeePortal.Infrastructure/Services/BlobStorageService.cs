@@ -13,7 +13,10 @@ public class BlobStorageService : IBlobStorageService
 
     public BlobStorageService(IConfiguration configuration)
     {
-        var connectionString = configuration["BlobStorage:ConnectionString"];
+        var connectionString = configuration["BlobStorage:ConnectionString"]
+            ?? configuration["BlobStorage--ConnectionString"]
+            ?? configuration["BlobStorage__ConnectionString"];
+
         _containerName = configuration["BlobStorage:ContainerName"] ?? "profile-photos";
 
         if (string.IsNullOrWhiteSpace(connectionString))
